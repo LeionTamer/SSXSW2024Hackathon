@@ -11,7 +11,10 @@ import {
 } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { apiEndpoint } from '@/lib/consts'
-import { ExtractResponsibilitiesType } from '@/lib/types'
+import {
+  CheckResponsibilitiesType,
+  ExtractResponsibilitiesType,
+} from '@/lib/types'
 import { scribeAtom } from '@/stores/scribeAtom'
 import { useMutation } from '@tanstack/react-query'
 import { useAtomValue } from 'jotai'
@@ -26,6 +29,13 @@ function CardRule({ title = 'Job Description' }: ICardRuleProps) {
   const [rules, setRules] = useState<ExtractResponsibilitiesType | undefined>(
     undefined
   )
+  const [sorted, setSorted] = useState<
+    { fulfilled: string[]; unfulfilled: string[] } | undefined
+  >()
+  const [, setMatchedRules] = useState<CheckResponsibilitiesType | undefined>(
+    undefined
+  )
+
   const scribe = useAtomValue(scribeAtom)
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -36,9 +46,6 @@ function CardRule({ title = 'Job Description' }: ICardRuleProps) {
 
   async function submit() {
     if (file) {
-      console.log('Uploading file...')
-      console.log(apiEndpoint)
-
       const formData = new FormData()
       formData.append('file', file)
 
@@ -76,7 +83,26 @@ function CardRule({ title = 'Job Description' }: ICardRuleProps) {
         }),
       })
 
-      console.table(result)
+      const data = (await result.json()) as CheckResponsibilitiesType
+
+      setMatchedRules(data)
+
+      console.table(data)
+
+      const fulfilled = data.responsibilities_fulfilled
+        .filter((entry) => entry.fulfilled === true)
+        .map((entry) => entry.id)
+
+      console.table(fulfilled)
+
+      setSorted({
+        fulfilled,
+        unfulfilled: data.responsibilities_fulfilled
+          .filter((entry) => entry.fulfilled === false)
+          .map((entry) => entry.id),
+      })
+
+      console.log(sorted)
     } catch (error) {
       console.error(error)
     }
@@ -85,6 +111,28 @@ function CardRule({ title = 'Job Description' }: ICardRuleProps) {
   const { mutate: validate } = useMutation({
     mutationFn: validateFn,
   })
+
+  const rulesList = !rules ? null : (
+    <div className="flex max-h-[80vh] flex-col gap-2 overflow-y-auto p-2">
+      {rules.responsibilities.map((entry) => {
+        const color = !!sorted
+          ? sorted.fulfilled.includes(entry.id)
+            ? 'bg-green-400/20'
+            : sorted.unfulfilled.includes(entry.id)
+              ? 'bg-red-400/20'
+              : 'bg-slate-400/20'
+          : 'bg-slate-400/20'
+        return (
+          <div
+            key={entry.id}
+            className={`border-1 border-slate-400 ${color} p-2`}
+          >
+            {entry.description}
+          </div>
+        )
+      })}
+    </div>
+  )
 
   useEffect(() => {
     if (!!rules && scribe.length >= 3) {
@@ -97,8 +145,9 @@ function CardRule({ title = 'Job Description' }: ICardRuleProps) {
     <div>
       <Dialog>
         <DialogTrigger asChild>
-          <div className="min-h-32 w-full rounded-md border-2 border-solid border-slate-500 bg-slate-200 p-3">
+          <div className="min-h-12 w-full rounded-md border-2 border-solid border-slate-500 bg-slate-200 p-3">
             {title}
+            {rulesList}
           </div>
         </DialogTrigger>
         <DialogContent className="max-w-5xl">
@@ -119,19 +168,7 @@ function CardRule({ title = 'Job Description' }: ICardRuleProps) {
                 >
                   Upload
                 </Button>
-                {!!rules && (
-                  <div className="flex max-h-56 flex-col gap-2 overflow-y-auto p-2">
-                    {rules.responsibilities.map((entry, index) => (
-                      <div
-                        key={index}
-                        className="border-1 border-slate-400 bg-slate-400/10 p-2"
-                      >
-                        {entry.description}
-                      </div>
-                    ))}
-                  </div>
-                )}
-                {scribe.length >= 3 && <div>{scribe}</div>}
+                {rulesList}
               </div>
             </DialogDescription>
           </DialogHeader>
