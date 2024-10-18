@@ -12,8 +12,10 @@ import {
 import { Input } from '@/components/ui/input'
 import { apiEndpoint } from '@/lib/consts'
 import { ExtractResponsibilitiesType } from '@/lib/types'
+import { scribeAtom } from '@/stores/scribeAtom'
 import { useMutation } from '@tanstack/react-query'
-import { useState } from 'react'
+import { useAtomValue } from 'jotai'
+import { useEffect, useState } from 'react'
 
 export interface ICardRuleProps {
   title?: string
@@ -24,6 +26,7 @@ function CardRule({ title = 'Job Description' }: ICardRuleProps) {
   const [rules, setRules] = useState<ExtractResponsibilitiesType | undefined>(
     undefined
   )
+  const scribe = useAtomValue(scribeAtom)
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
@@ -60,6 +63,36 @@ function CardRule({ title = 'Job Description' }: ICardRuleProps) {
     mutationFn: submit,
   })
 
+  async function validateFn() {
+    try {
+      const result = await fetch(`${apiEndpoint}/check_responsibilities`, {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+        },
+        body: JSON.stringify({
+          transcript: scribe,
+          all_responsibilities: rules!.responsibilities,
+        }),
+      })
+
+      console.table(result)
+    } catch (error) {
+      console.error(error)
+    }
+  }
+
+  const { mutate: validate } = useMutation({
+    mutationFn: validateFn,
+  })
+
+  useEffect(() => {
+    if (!!rules && scribe.length >= 3) {
+      console.log('I was called')
+      validate()
+    }
+  }, [scribe])
+
   return (
     <div>
       <Dialog>
@@ -87,7 +120,7 @@ function CardRule({ title = 'Job Description' }: ICardRuleProps) {
                   Upload
                 </Button>
                 {!!rules && (
-                  <div className="flex flex-col gap-2 p-2">
+                  <div className="flex max-h-56 flex-col gap-2 overflow-y-auto p-2">
                     {rules.responsibilities.map((entry, index) => (
                       <div
                         key={index}
@@ -98,6 +131,7 @@ function CardRule({ title = 'Job Description' }: ICardRuleProps) {
                     ))}
                   </div>
                 )}
+                {scribe.length >= 3 && <div>{scribe}</div>}
               </div>
             </DialogDescription>
           </DialogHeader>
