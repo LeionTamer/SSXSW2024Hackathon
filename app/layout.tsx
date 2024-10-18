@@ -5,7 +5,7 @@ import { HEADER_HEIGHT } from '@/lib/consts'
 import Navbar from '@/components/navbar'
 
 export const metadata: Metadata = {
-  title: 'Smart Onboarding',
+  title: 'Smart Performance Review',
   description: 'Hackathon stuff',
 }
 
