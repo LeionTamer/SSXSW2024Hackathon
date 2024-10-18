@@ -10,21 +10,46 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
 import { useMutation } from '@tanstack/react-query'
 import { useState } from 'react'
-import { upload_file } from './_rule-action'
+import { apiEndpoint } from '@/lib/consts'
 
 function CardRule() {
   const [title, setTitle] = useState('')
+  const [file, setFile] = useState<File | null>(null)
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files) {
+      setFile(e.target.files[0])
+    }
+  }
+
+  async function submit() {
+    if (file) {
+      console.log('Uploading file...')
+
+      const formData = new FormData()
+      formData.append('file', file)
+
+      try {
+        // You can write the URL of your server or any other endpoint used for file upload
+        const result = await fetch(`${apiEndpoint}/extract_responsibilities`, {
+          method: 'POST',
+          body: formData,
+        })
+
+        const data = await result.json()
+
+        console.log(data)
+      } catch (error) {
+        console.error(error)
+      }
+    }
+  }
 
   const { mutate, isPending } = useMutation({
-    mutationFn: upload_file,
+    mutationFn: submit,
   })
-
-  function submit() {
-    mutate()
-  }
 
   return (
     <div>
@@ -45,9 +70,13 @@ function CardRule() {
                   placeholder="title"
                 />
                 <div className="grid w-full max-w-sm items-center gap-1.5">
-                  <Input id="picture" type="file" />
+                  <Input
+                    id="documemt input"
+                    type="file"
+                    onChange={handleFileChange}
+                  />
                 </div>
-                <Button disabled={isPending} onClick={() => submit()}>
+                <Button disabled={isPending || !file} onClick={() => mutate()}>
                   Upload
                 </Button>
               </div>
