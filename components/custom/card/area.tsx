@@ -9,7 +9,6 @@ function CardArea() {
       className="w-xl col-span-3 border-4 border-slate-400 p-5"
       style={{ height: bodyHeightStyle }}
     >
-      cats
       <CardRule />
     </div>
   )
