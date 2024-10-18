@@ -21,7 +21,9 @@ function ContentArea() {
           rows={30}
         />
         <div className="flex flex-row-reverse">
-          <Button disabled={disabledAction}>Action</Button>
+          <Button disabled={disabledAction} onClick={() => setScribe(convo)}>
+            Action
+          </Button>
         </div>
       </div>
     </div>
