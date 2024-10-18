@@ -14,10 +14,11 @@ import { apiEndpoint } from '@/lib/consts'
 import {
   CheckResponsibilitiesType,
   ExtractResponsibilitiesType,
+  IAlertData,
 } from '@/lib/types'
-import { scribeAtom } from '@/stores/scribeAtom'
+import { alertAtom, scribeAtom } from '@/stores/scribeAtom'
 import { useMutation } from '@tanstack/react-query'
-import { useAtomValue } from 'jotai'
+import { useAtomValue, useSetAtom } from 'jotai'
 import { useEffect, useState } from 'react'
 
 export interface ICardRuleProps {
@@ -32,9 +33,7 @@ function CardRule({ title = 'Job Description' }: ICardRuleProps) {
   const [sorted, setSorted] = useState<
     { fulfilled: string[]; unfulfilled: string[] } | undefined
   >()
-  const [, setMatchedRules] = useState<CheckResponsibilitiesType | undefined>(
-    undefined
-  )
+  const setAlert = useSetAtom(alertAtom)
 
   const scribe = useAtomValue(scribeAtom)
 
@@ -85,9 +84,18 @@ function CardRule({ title = 'Job Description' }: ICardRuleProps) {
 
       const data = (await result.json()) as CheckResponsibilitiesType
 
-      setMatchedRules(data)
-
       console.table(data)
+
+      const alertData = data.responsibilities_fulfilled.map((entry) => {
+        const reference = rules?.responsibilities.find(
+          (rule) => rule.id === entry.id
+        )
+        return {
+          title: reference?.description,
+          ...entry,
+        } as IAlertData
+      })
+      setAlert(alertData)
 
       const fulfilled = data.responsibilities_fulfilled
         .filter((entry) => entry.fulfilled === true)

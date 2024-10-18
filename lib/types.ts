@@ -11,6 +11,10 @@ export type ResponsibilitiesFulfilledType = {
   name_responsibility: string
 }
 
+export interface IAlertData extends ResponsibilitiesFulfilledType {
+  title: string
+}
+
 export type CheckResponsibilitiesType = {
   reasoning: string
   responsibilities_fulfilled: ResponsibilitiesFulfilledType[]
