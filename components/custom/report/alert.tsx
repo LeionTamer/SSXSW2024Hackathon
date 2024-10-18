@@ -20,7 +20,7 @@ function AlertDialog() {
   return (
     <Dialog>
       <DialogTrigger asChild>
-        <Button>Show Report</Button>
+        <Button>Show Generated Report</Button>
       </DialogTrigger>
       <DialogContent className="max-w-5xl">
         <DialogTitle>Generated Report</DialogTitle>
