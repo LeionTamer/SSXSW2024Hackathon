@@ -17,11 +17,9 @@ export default function RootLayout({
   return (
     <html lang="en">
       <Providers>
-        <body>
-          <div style={{ gridTemplateRows: `${HEADER_HEIGHT} 1fr` }}>
-            <Navbar />
-            {children}
-          </div>
+        <body style={{ gridTemplateRows: `${HEADER_HEIGHT} 1fr` }}>
+          <Navbar />
+          {children}
         </body>
       </Providers>
     </html>
