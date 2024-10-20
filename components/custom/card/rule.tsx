@@ -20,6 +20,8 @@ import { alertAtom, scribeAtom } from '@/stores/scribeAtom'
 import { useMutation } from '@tanstack/react-query'
 import { useAtomValue, useSetAtom } from 'jotai'
 import { useEffect, useState } from 'react'
+import { testOpenAI } from './_rule-action'
+import { ResponsibiilityType } from './_rule-schema'
 
 export interface ICardRuleProps {
   title?: string
@@ -27,9 +29,12 @@ export interface ICardRuleProps {
 
 function CardRule({ title = 'Job Description' }: ICardRuleProps) {
   const [file, setFile] = useState<File | null>(null)
-  const [rules, setRules] = useState<ExtractResponsibilitiesType | undefined>(
-    undefined
-  )
+  const [rules] = useState<ExtractResponsibilitiesType | undefined>(undefined)
+
+  const [responsibilities, setResponsibilities] = useState<
+    ResponsibiilityType[]
+  >([])
+
   const [sorted, setSorted] = useState<
     { fulfilled: string[]; unfulfilled: string[] } | undefined
   >()
@@ -43,31 +48,21 @@ function CardRule({ title = 'Job Description' }: ICardRuleProps) {
     }
   }
 
-  async function submit() {
+  const {
+    mutate: responsibiilitiesMutate,
+    isPending: responsibilitiesLoading,
+    data: jobDetails,
+  } = useMutation({
+    mutationFn: testOpenAI,
+  })
+
+  function getResponsibillities() {
+    const formData = new FormData()
     if (file) {
-      const formData = new FormData()
       formData.append('file', file)
-
-      try {
-        // You can write the URL of your server or any other endpoint used for file upload
-        const result = await fetch(`${apiEndpoint}/extract_responsibilities`, {
-          method: 'POST',
-          body: formData,
-        })
-
-        const data = (await result.json()) as ExtractResponsibilitiesType
-        setRules(data)
-
-        console.log(data)
-      } catch (error) {
-        console.error(error)
-      }
+      responsibiilitiesMutate(formData)
     }
   }
-
-  const { mutate, isPending } = useMutation({
-    mutationFn: submit,
-  })
 
   async function validateFn() {
     try {
@@ -143,6 +138,11 @@ function CardRule({ title = 'Job Description' }: ICardRuleProps) {
   )
 
   useEffect(() => {
+    console.table(jobDetails?.responsibilities)
+    setResponsibilities(jobDetails?.responsibilities || [])
+  }, [jobDetails])
+
+  useEffect(() => {
     if (!!rules && scribe.length >= 3) {
       console.log('I was called')
       validate()
@@ -170,11 +170,16 @@ function CardRule({ title = 'Job Description' }: ICardRuleProps) {
                     onChange={handleFileChange}
                   />
                 </div>
+
                 <Button
-                  disabled={isPending || !file || !!rules}
-                  onClick={() => mutate()}
+                  disabled={
+                    responsibilitiesLoading ||
+                    !file ||
+                    responsibilities.length >= 1
+                  }
+                  onClick={() => getResponsibillities()}
                 >
-                  Upload
+                  Upload Job description
                 </Button>
                 {rulesList}
               </div>
