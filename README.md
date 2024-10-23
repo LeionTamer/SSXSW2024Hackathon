@@ -52,7 +52,7 @@ Changes in the `app/layout.tsx`
 ```typescript
 <html lang="en">
   <Providers>
-    <body className={inter.className}>{children}</body>
+    <body>{children}</body>
   </Providers>
 </html>
 ```
