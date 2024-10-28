@@ -20,8 +20,8 @@ import { alertAtom, scribeAtom } from '@/stores/scribeAtom'
 import { useMutation } from '@tanstack/react-query'
 import { useAtomValue, useSetAtom } from 'jotai'
 import { useEffect, useState } from 'react'
-import { testOpenAI } from './_rule-action'
-import { ResponsibiilityType } from './_rule-schema'
+import { getResponsibilitiesAction } from './_rule-action'
+import { ResponsibilityType } from './_rule-schema'
 
 export interface ICardRuleProps {
   title?: string
@@ -32,7 +32,7 @@ function CardRule({ title = 'Job Description' }: ICardRuleProps) {
   const [rules] = useState<ExtractResponsibilitiesType | undefined>(undefined)
 
   const [responsibilities, setResponsibilities] = useState<
-    ResponsibiilityType[]
+    ResponsibilityType[]
   >([])
 
   const [sorted, setSorted] = useState<
@@ -49,18 +49,18 @@ function CardRule({ title = 'Job Description' }: ICardRuleProps) {
   }
 
   const {
-    mutate: responsibiilitiesMutate,
+    mutate: responsibilitiesMutate,
     isPending: responsibilitiesLoading,
     data: jobDetails,
   } = useMutation({
-    mutationFn: testOpenAI,
+    mutationFn: getResponsibilitiesAction,
   })
 
-  function getResponsibillities() {
+  function getResponsibilities() {
     const formData = new FormData()
     if (file) {
       formData.append('file', file)
-      responsibiilitiesMutate(formData)
+      responsibilitiesMutate(formData)
     }
   }
 
@@ -115,9 +115,9 @@ function CardRule({ title = 'Job Description' }: ICardRuleProps) {
     mutationFn: validateFn,
   })
 
-  const rulesList = !rules ? null : (
-    <div className="flex max-h-[80vh] flex-col gap-2 overflow-y-auto p-2">
-      {rules.responsibilities.map((entry) => {
+  const rulesList = !jobDetails ? null : (
+    <span className="flex max-h-[80vh] flex-col gap-2 overflow-y-auto py-2">
+      {jobDetails.responsibilities!.map((entry) => {
         const color = !!sorted
           ? sorted.fulfilled.includes(entry.id)
             ? 'bg-green-400/20'
@@ -126,15 +126,15 @@ function CardRule({ title = 'Job Description' }: ICardRuleProps) {
               : 'bg-slate-400/20'
           : 'bg-slate-400/20'
         return (
-          <div
+          <span
             key={entry.id}
             className={`border-1 border-slate-400 ${color} p-2`}
           >
-            {entry.description}
-          </div>
+            {entry.responsibility}
+          </span>
         )
       })}
-    </div>
+    </span>
   )
 
   useEffect(() => {
@@ -147,29 +147,30 @@ function CardRule({ title = 'Job Description' }: ICardRuleProps) {
       console.log('I was called')
       validate()
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [scribe])
 
   return (
     <div>
       <Dialog>
         <DialogTrigger asChild>
-          <div className="min-h-12 w-full rounded-md border-2 border-solid border-slate-500 bg-slate-200 p-3">
+          <span className="min-h-12 w-full rounded-md border-2 border-solid border-slate-500 bg-slate-200 p-3">
             {title}
             {rulesList}
-          </div>
+          </span>
         </DialogTrigger>
         <DialogContent className="max-w-5xl">
           <DialogHeader>
             <DialogTitle className="my-3">{title}</DialogTitle>
             <DialogDescription>
-              <div className="grid grid-flow-row gap-4">
-                <div className="grid w-full items-center gap-1.5">
+              <span className="grid grid-flow-row gap-4">
+                <span className="grid w-full items-center gap-1.5">
                   <Input
                     id="documemt input"
                     type="file"
                     onChange={handleFileChange}
                   />
-                </div>
+                </span>
 
                 <Button
                   disabled={
@@ -177,12 +178,12 @@ function CardRule({ title = 'Job Description' }: ICardRuleProps) {
                     !file ||
                     responsibilities.length >= 1
                   }
-                  onClick={() => getResponsibillities()}
+                  onClick={() => getResponsibilities()}
                 >
                   Upload Job description
                 </Button>
                 {rulesList}
-              </div>
+              </span>
             </DialogDescription>
           </DialogHeader>
         </DialogContent>

@@ -8,7 +8,7 @@ const myHeaders = new Headers()
 myHeaders.append('Content-Type', 'application/json')
 myHeaders.append('ngrok-skip-browser-warning', 'true')
 
-export async function testOpenAI(formData: FormData) {
+export async function getResponsibilitiesAction(formData: FormData) {
   const file = formData.get('file') as File
   const fileText = await file.text()
 
@@ -35,7 +35,8 @@ export async function testOpenAI(formData: FormData) {
     ),
   })
 
-  const responsibilities = completion.choices[0].message.parsed?.responsibilties
+  const responsibilities =
+    completion.choices[0].message.parsed?.responsibilities
 
   console.log(responsibilities)
 
