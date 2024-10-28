@@ -10,17 +10,15 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
-import { apiEndpoint } from '@/lib/consts'
-import {
-  CheckResponsibilitiesType,
-  ExtractResponsibilitiesType,
-  IAlertData,
-} from '@/lib/types'
+import { IAlertData } from '@/lib/types'
 import { alertAtom, scribeAtom } from '@/stores/scribeAtom'
 import { useMutation } from '@tanstack/react-query'
 import { useAtomValue, useSetAtom } from 'jotai'
 import { useEffect, useState } from 'react'
-import { getResponsibilitiesAction } from './_rule-action'
+import {
+  getResponsibilitiesAction,
+  validateResponsibilities,
+} from './_rule-action'
 import { ResponsibilityType } from './_rule-schema'
 
 export interface ICardRuleProps {
@@ -29,7 +27,6 @@ export interface ICardRuleProps {
 
 function CardRule({ title = 'Job Description' }: ICardRuleProps) {
   const [file, setFile] = useState<File | null>(null)
-  const [rules] = useState<ExtractResponsibilitiesType | undefined>(undefined)
 
   const [responsibilities, setResponsibilities] = useState<
     ResponsibilityType[]
@@ -64,55 +61,34 @@ function CardRule({ title = 'Job Description' }: ICardRuleProps) {
     }
   }
 
-  async function validateFn() {
-    try {
-      const result = await fetch(`${apiEndpoint}/check_responsibilities`, {
-        method: 'POST',
-        headers: {
-          'content-type': 'application/json',
-        },
-        body: JSON.stringify({
-          transcript: scribe,
-          all_responsibilities: rules!.responsibilities,
-        }),
-      })
-
-      const data = (await result.json()) as CheckResponsibilitiesType
-
+  const { mutate: validate } = useMutation({
+    mutationFn: validateResponsibilities,
+    onSuccess(data) {
       console.table(data)
-
-      const alertData = data.responsibilities_fulfilled.map((entry) => {
-        const reference = rules?.responsibilities.find(
+      const alertData = data.validations!.map((entry) => {
+        const reference = jobDetails?.responsibilities!.find(
           (rule) => rule.id === entry.id
         )
+
         return {
-          title: reference?.description,
-          ...entry,
+          title: reference?.responsibility,
+          comment: entry.reason || '',
+          id: entry.id,
+          fulfilled: entry.fulfilled,
         } as IAlertData
       })
+
       setAlert(alertData)
 
-      const fulfilled = data.responsibilities_fulfilled
-        .filter((entry) => entry.fulfilled === true)
-        .map((entry) => entry.id)
-
-      console.table(fulfilled)
-
       setSorted({
-        fulfilled,
-        unfulfilled: data.responsibilities_fulfilled
-          .filter((entry) => entry.fulfilled === false)
-          .map((entry) => entry.id),
+        fulfilled: data
+          .validations!.filter((item) => item.fulfilled === true)
+          .map((item) => item.id),
+        unfulfilled: data
+          .validations!.filter((item) => item.fulfilled === false)
+          .map((item) => item.id),
       })
-
-      console.log(sorted)
-    } catch (error) {
-      console.error(error)
-    }
-  }
-
-  const { mutate: validate } = useMutation({
-    mutationFn: validateFn,
+    },
   })
 
   const rulesList = !jobDetails ? null : (
@@ -143,9 +119,12 @@ function CardRule({ title = 'Job Description' }: ICardRuleProps) {
   }, [jobDetails])
 
   useEffect(() => {
-    if (!!rules && scribe.length >= 3) {
+    if (!!jobDetails?.responsibilities && scribe.length >= 3) {
       console.log('I was called')
-      validate()
+      validate({
+        responsibilities: jobDetails?.responsibilities,
+        scribe,
+      })
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [scribe])
@@ -168,7 +147,7 @@ function CardRule({ title = 'Job Description' }: ICardRuleProps) {
               <span className="grid grid-flow-row">
                 <span className="grid w-full items-center gap-1.5">
                   <Input
-                    id="documemt input"
+                    id="documentInput"
                     type="file"
                     onChange={handleFileChange}
                   />
