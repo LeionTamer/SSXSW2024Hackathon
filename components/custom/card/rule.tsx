@@ -116,7 +116,7 @@ function CardRule({ title = 'Job Description' }: ICardRuleProps) {
   })
 
   const rulesList = !jobDetails ? null : (
-    <span className="flex max-h-[80vh] flex-col gap-2 overflow-y-auto py-2">
+    <span className="mt-4 flex max-h-[80vh] flex-col gap-2 overflow-y-auto py-2">
       {jobDetails.responsibilities!.map((entry) => {
         const color = !!sorted
           ? sorted.fulfilled.includes(entry.id)
@@ -154,16 +154,18 @@ function CardRule({ title = 'Job Description' }: ICardRuleProps) {
     <div>
       <Dialog>
         <DialogTrigger asChild>
-          <span className="min-h-12 w-full rounded-md border-2 border-solid border-slate-500 bg-slate-200 p-3">
-            {title}
-            {rulesList}
-          </span>
+          <div>
+            <span className="min-h-12 w-full rounded-md border-2 border-solid border-slate-500 bg-slate-200 p-3">
+              {title}
+            </span>
+            {!!rulesList && <span>{rulesList}</span>}
+          </div>
         </DialogTrigger>
         <DialogContent className="max-w-5xl">
           <DialogHeader>
-            <DialogTitle className="my-3">{title}</DialogTitle>
+            <DialogTitle className="m-3">{title}</DialogTitle>
             <DialogDescription>
-              <span className="grid grid-flow-row gap-4">
+              <span className="grid grid-flow-row">
                 <span className="grid w-full items-center gap-1.5">
                   <Input
                     id="documemt input"
