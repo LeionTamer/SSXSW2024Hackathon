@@ -1,3 +1,19 @@
+## Run locally
+
+You will need to update the `.env` file with a valid OPENAI API key
+
+First time with the app, you will need to run node installation
+
+```bash
+npm install
+```
+
+To run locally, you would need to run the dev script
+
+```bash
+npm run dev
+```
+
 ## Getting Started
 
 Install the nextjs app with preferred settings
